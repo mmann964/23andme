@@ -65,10 +65,13 @@ def get_search_str(prompt="What subject are you interested in? "):
 
 
 def save_to_file(book_dict, filename):
-    with open(filename, 'wb') as csvfile:
+    try:
+        csvfile = open(filename, 'wb')
         libwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         for i in book_dict:
             libwriter.writerow([i])
+    except IOError:
+         print "Error while saving file."   
 
 
 def get_next_choice():
