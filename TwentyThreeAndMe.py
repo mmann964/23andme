@@ -8,7 +8,7 @@ import calendar
 
 def extract_price(jsonstr):
     try:
-        return int(jsonstr['saleInfo']['retailPrice']['amount'])
+        return float(jsonstr['saleInfo']['retailPrice']['amount'])
     except KeyError:
         return 0
 
@@ -107,7 +107,11 @@ def do_search():
 
     # put the response into a dictionary called books
     data = response.json()
-    return data["items"]  # data is a dictionary, data["items"] is a list of 10 dictionary items
+    try:
+        d = data["items"]  # data is a dictionary, data["items"] is a list of 10 dictionary items
+    except KeyError:
+        d = []  # no results were returned
+    return d
 
 
 def get_book_info(book, index):
