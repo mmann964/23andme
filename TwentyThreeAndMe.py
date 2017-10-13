@@ -1,72 +1,77 @@
 #!/usr/bin/python
 
 import requests
-import json
 import csv
 import datetime
 import calendar
 
 
-def extract_price(jStr):
+def extract_price(jsonstr):
     try:
-        return int(jStr['saleInfo']['retailPrice']['amount'])
+        return int(jsonstr['saleInfo']['retailPrice']['amount'])
     except KeyError:
         return 0
 
-def extract_rating(jStr):
+
+def extract_rating(jsonstr):
     try:
-        return int(jStr['volumeInfo']['averageRating'])
+        return float(jsonstr['volumeInfo']['averageRating'])
     except KeyError:
         return 0
 
-def extract_ratingsCount(jStr):
+
+def extract_ratings_count(jsonstr):
     try:
-        return int(jStr['volumeInfo']['ratingsCount'])
+        return int(jsonstr['volumeInfo']['ratingsCount'])
     except KeyError:
         return 0
 
-def extract_publishedDate(jStr):
+
+def extract_published_date(jsonstr):
     try:
-        dateStr = jStr['volumeInfo']['publishedDate']
+        datestr = jsonstr['volumeInfo']['publishedDate']
         # dateStr is in different formats.
         # figure out which one it is, and convert to sortable timestamp
-        if len(dateStr) == 4:
+        if len(datestr) == 4:
             # assume it's just the year
-            formatStr = '%Y'
-        elif len(dateStr) == 7:
+            formatstr = '%Y'
+        elif len(datestr) == 7:
             # assume it's YYYY-MM
-            formatStr = '%Y-%m'
-        elif len(dateStr) == 10:
+            formatstr = '%Y-%m'
+        elif len(datestr) == 10:
             # assume it's YYYY-MM-DD
-            formatStr = '%Y-%m-%d'
+            formatstr = '%Y-%m-%d'
         else:
             # not sure -- return 0
             return 0
-        d1 = datetime.datetime.strptime(dateStr, formatStr)
+        d1 = datetime.datetime.strptime(datestr, formatstr)
         return calendar.timegm(d1.utctimetuple())
-
-        #return time.mktime(time.strptime(dateStr, formatStr))  #doesn't work for dates prior to 1900
-
     except KeyError:
         return 0
 
-def extract_pageCount(jStr):
+
+def extract_page_count(jsonstr):
     try:
-        return int(jStr['volumeInfo']['pageCount'])
+        return int(jsonstr['volumeInfo']['pageCount'])
     except KeyError:
         return 0
 
-def getSearchStr(prompt="What subject are you interested in? "):
-    searchStr = raw_input(prompt)
-    return searchStr.replace(' ', '+')
 
-def saveToFile(book_dict, fname):
-    with open(fname, 'wb') as csvfile:
+def get_search_str(prompt="What subject are you interested in? "):
+    searchstr = ""
+    while searchstr == "":
+        searchstr = raw_input(prompt)
+    return searchstr.replace(' ', '+')
+
+
+def save_to_file(book_dict, filename):
+    with open(filename, 'wb') as csvfile:
         libwriter = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         for i in book_dict:
             libwriter.writerow([i])
 
-def getNextChoice():
+
+def get_next_choice():
     # Ask the user what they want to do next
 
     print ""
@@ -82,12 +87,13 @@ def getNextChoice():
     print "\t[L]oad existing file"
     return raw_input("> ").upper()
 
-def doSearch():
-    searchStr = getSearchStr()
-    requestStr = baseUrlStr + searchStr
+
+def do_search():
+    searchstr = get_search_str()
+    requeststr = baseUrlStr + searchstr
 
     # do the request
-    response = requests.get(requestStr)
+    response = requests.get(requeststr)
 
     # exit if you get a 400 or 500 error
     if response.status_code >= 400:
@@ -99,71 +105,73 @@ def doSearch():
     data = response.json()
     return data["items"]  # data is a dictionary, data["items"] is a list of 10 dictionary items
 
-def getBookInfo(book, index):
+
+def get_book_info(book, index):
     try:
         val = book["volumeInfo"][index]
     except KeyError:
         val = "N/A"
     return val
 
-def printResults(books):
+
+def print_results(booklist):
     print ""
-    for i in range(len(books)):
-        title = getBookInfo(books[i], "title")
-        pageCount = getBookInfo(books[i], "pageCount")
-        avgRating = getBookInfo(books[i], "averageRating")
-        ratingCount = getBookInfo(books[i], "ratingsCount")
-        publishDate = getBookInfo(books[i], "publishedDate")
+    for i in range(len(booklist)):
+        title = get_book_info(booklist[i], "title")
+        page_count = get_book_info(booklist[i], "pageCount")
+        avg_rating = get_book_info(booklist[i], "averageRating")
+        rating_count = get_book_info(booklist[i], "ratingsCount")
+        publish_date = get_book_info(booklist[i], "publishedDate")
 
         try:
-            price = books[i]['saleInfo']['retailPrice']['amount']
+            price = booklist[i]['saleInfo']['retailPrice']['amount']
         except KeyError:
             price = "N/A"
 
         print u"Title: {}, Price: {} Pages: {}, Publish Date: {}, Average Rating: {}, Number of Ratings: {}"\
-            .format(title, price, pageCount, publishDate, avgRating, ratingCount)
+            .format(title, price, page_count, publish_date, avg_rating, rating_count)
 
     print ""
+
 
 if __name__ == "__main__":
 
     baseUrlStr = 'https://www.googleapis.com/books/v1/volumes?q='
 
-    books = doSearch() #books is a list
-    printResults(books)
-
+    books = do_search()  # books is a list
+    print_results(books)
 
     # next choices
     while True:
-        a = getNextChoice()
+        a = get_next_choice()
 
         if a == 'Q':
             exit()
         elif a == 'N':
-            books = doSearch()
-            printResults(books)
+            books = do_search()
+            print_results(books)
         elif a == 'S':
             fname = raw_input("Which file should I save these results to? ")
             if len(fname) == 0:
                 print "No filename given.  Saving to temp.csv."
                 fname = "temp.csv"
-            saveToFile(books, fname)
+            save_to_file(books, fname)
         elif a == 'P':
             books.sort(key=extract_price)
-            printResults(books)
+            print_results(books)
         elif a == 'A':
             books.sort(key=extract_rating)
-            printResults(books)
+            print_results(books)
         elif a == 'R':
-            books.sort(key=extract_ratingsCount)
-            printResults(books)
+            books.sort(key=extract_ratings_count)
+            print_results(books)
         elif a == 'D':
-            books.sort(key=extract_publishedDate)
-            printResults(books)
+            books.sort(key=extract_published_date)
+            print_results(books)
         elif a == 'C':
-            books.sort(key=extract_pageCount)
-            printResults(books)
+            books.sort(key=extract_page_count)
+            print_results(books)
         elif a == 'L':
             print "I haven't been able to make this work."
         else:
-            getNextChoice()
+            get_next_choice()
