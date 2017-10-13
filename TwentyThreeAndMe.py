@@ -164,6 +164,6 @@ if __name__ == "__main__":
             books.sort(key=extract_pageCount)
             printResults(books)
         elif a == 'L':
-            print "I don't know how to do that yet"
+            print "I haven't been able to make this work."
         else:
             getNextChoice()
