@@ -60,7 +60,7 @@ def extract_page_count(jsonstr):
 def get_search_str(prompt="What subject are you interested in? "):
     searchstr = ""
     while searchstr == "":
-        searchstr = raw_input(prompt)
+        searchstr = raw_input(prompt).strip()
     return searchstr.replace(' ', '+')
 
 
@@ -85,7 +85,11 @@ def get_next_choice():
     print "\t[S]ave to CSV file"
     print "\t[N]ew search"
     print "\t[L]oad existing file"
-    return raw_input("> ").upper()
+    s = raw_input("> ").strip().upper()
+    if len(s) == 0:
+        return ""
+    else:
+        return s[0]
 
 
 def do_search():
@@ -151,7 +155,7 @@ if __name__ == "__main__":
             books = do_search()
             print_results(books)
         elif a == 'S':
-            fname = raw_input("Which file should I save these results to? ")
+            fname = raw_input("Which file should I save these results to? ").strip()
             if len(fname) == 0:
                 print "No filename given.  Saving to temp.csv."
                 fname = "temp.csv"
@@ -172,6 +176,4 @@ if __name__ == "__main__":
             books.sort(key=extract_page_count)
             print_results(books)
         elif a == 'L':
-            print "I haven't been able to make this work."
-        else:
-            get_next_choice()
+            print "Coming Soon!"
